@@ -10,7 +10,10 @@ declare(strict_types=1);
 // ── Session ────────────────────────────────────────
 ini_set('session.cookie_httponly', '1');
 ini_set('session.cookie_samesite', 'Lax');
-if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+// دعم Hostinger reverse proxy: يفحص كلا المتغيرين
+$isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+if ($isHttps) {
     ini_set('session.cookie_secure', '1');
 }
 session_start();
@@ -74,6 +77,7 @@ try {
             if ($n > 0) fail('already_bootstrapped');
             $stmt = db()->prepare('INSERT INTO bina_users (username, password, role) VALUES (?, ?, ?)');
             $stmt->execute([$u, password_hash($p, PASSWORD_DEFAULT), 'admin']);
+            session_regenerate_id(true); // منع session fixation
             $_SESSION['bina_user'] = $u;
             $_SESSION['bina_role'] = 'admin';
             out(['ok' => true, 'user' => $u, 'role' => 'admin']);
@@ -180,61 +184,67 @@ try {
             $jobs     = $body['jobs']        ?? [];
             $payments = $body['payments']     ?? [];
             $activity = $body['activityLog']  ?? [];
-            db()->beginTransaction();
-            // Jobs
-            db()->exec('DELETE FROM bina_jobs');
-            if ($jobs) {
-                $stmt = db()->prepare(
-                    'INSERT INTO bina_jobs
-                     (id,worker,work,date,time,unit_type,unit_price,length,width,
-                      void_length,void_width,half_void,double_work,note,entered_by)
-                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-                );
-                foreach ($jobs as $j) {
-                    $stmt->execute([
-                        $j['id'] ?? '', $j['worker'] ?? '', $j['work'] ?? '',
-                        $j['date'] ?? date('Y-m-d'), $j['time'] ?? '',
-                        $j['unitType'] ?? 'مربع', (float)($j['unitPrice'] ?? 0),
-                        (float)($j['length'] ?? 0), (float)($j['width'] ?? 0),
-                        (float)($j['voidLength'] ?? 0), (float)($j['voidWidth'] ?? 0),
-                        (int)($j['halfVoid'] ?? 0), (int)($j['doubleWork'] ?? 0),
-                        $j['note'] ?? '', $j['enteredBy'] ?? ''
-                    ]);
+            try {
+                db()->beginTransaction();
+                // Jobs
+                db()->exec('DELETE FROM bina_jobs');
+                if ($jobs) {
+                    $stmt = db()->prepare(
+                        'INSERT INTO bina_jobs
+                         (id,worker,work,date,time,unit_type,unit_price,length,width,
+                          void_length,void_width,half_void,double_work,note,entered_by)
+                         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                    );
+                    foreach ($jobs as $j) {
+                        $stmt->execute([
+                            $j['id'] ?? '', $j['worker'] ?? '', $j['work'] ?? '',
+                            $j['date'] ?? date('Y-m-d'), $j['time'] ?? '',
+                            $j['unitType'] ?? 'مربع', (float)($j['unitPrice'] ?? 0),
+                            (float)($j['length'] ?? 0), (float)($j['width'] ?? 0),
+                            (float)($j['voidLength'] ?? 0), (float)($j['voidWidth'] ?? 0),
+                            (int)($j['halfVoid'] ?? 0), (int)($j['doubleWork'] ?? 0),
+                            $j['note'] ?? '', $j['enteredBy'] ?? ''
+                        ]);
+                    }
                 }
-            }
-            // Payments
-            db()->exec('DELETE FROM bina_payments');
-            if ($payments) {
-                $stmt = db()->prepare(
-                    'INSERT INTO bina_payments (id,worker,date,time,amount,note,entered_by)
-                     VALUES (?,?,?,?,?,?,?)'
-                );
-                foreach ($payments as $p) {
-                    $stmt->execute([
-                        $p['id'] ?? '', $p['worker'] ?? '',
-                        $p['date'] ?? date('Y-m-d'), $p['time'] ?? '',
-                        (float)($p['amount'] ?? 0), $p['note'] ?? '', $p['enteredBy'] ?? ''
-                    ]);
+                // Payments
+                db()->exec('DELETE FROM bina_payments');
+                if ($payments) {
+                    $stmt = db()->prepare(
+                        'INSERT INTO bina_payments (id,worker,date,time,amount,note,entered_by)
+                         VALUES (?,?,?,?,?,?,?)'
+                    );
+                    foreach ($payments as $p) {
+                        $stmt->execute([
+                            $p['id'] ?? '', $p['worker'] ?? '',
+                            $p['date'] ?? date('Y-m-d'), $p['time'] ?? '',
+                            (float)($p['amount'] ?? 0), $p['note'] ?? '', $p['enteredBy'] ?? ''
+                        ]);
+                    }
                 }
-            }
-            // Activity
-            db()->exec('DELETE FROM bina_activity');
-            if ($activity) {
-                $stmt = db()->prepare(
-                    'INSERT INTO bina_activity (id,type,worker,detail,amount,ts,entered_by)
-                     VALUES (?,?,?,?,?,?,?)'
-                );
-                foreach (array_slice($activity, 0, 500) as $a) {
-                    $stmt->execute([
-                        $a['id'] ?? '', $a['type'] ?? '', $a['worker'] ?? '',
-                        $a['detail'] ?? '', (float)($a['amount'] ?? 0),
-                        isset($a['ts']) ? date('Y-m-d H:i:s', strtotime($a['ts'])) : date('Y-m-d H:i:s'),
-                        $a['enteredBy'] ?? ''
-                    ]);
+                // Activity
+                db()->exec('DELETE FROM bina_activity');
+                if ($activity) {
+                    $stmt = db()->prepare(
+                        'INSERT INTO bina_activity (id,type,worker,detail,amount,ts,entered_by)
+                         VALUES (?,?,?,?,?,?,?)'
+                    );
+                    foreach (array_slice($activity, 0, 500) as $a) {
+                        $stmt->execute([
+                            $a['id'] ?? '', $a['type'] ?? '', $a['worker'] ?? '',
+                            $a['detail'] ?? '', (float)($a['amount'] ?? 0),
+                            isset($a['ts']) ? date('Y-m-d H:i:s', strtotime($a['ts'])) : date('Y-m-d H:i:s'),
+                            $a['enteredBy'] ?? ''
+                        ]);
+                    }
                 }
+                db()->commit();
+                out(['ok' => true]);
+            } catch (PDOException $txErr) {
+                if (db()->inTransaction()) db()->rollBack();
+                error_log('[Bina] saveState rollback: ' . $txErr->getMessage());
+                fail('save_failed');
             }
-            db()->commit();
-            out(['ok' => true]);
 
         // ── Contact ───────────────────────────────
 
@@ -306,7 +316,11 @@ try {
             $stmt->execute([$key]);
             $row = $stmt->fetch();
             if (!$row) fail('not_found');
-            // إرجاع البيانات مباشرة: jobs, payments, activityLog
+            // تحقق من صحة JSON قبل الإرسال
+            $decoded = json_decode($row['data'], true);
+            if (json_last_error() !== JSON_ERROR_NONE || !isset($decoded['jobs'])) {
+                fail('backup_data_corrupted');
+            }
             echo $row['data'];
             exit;
 

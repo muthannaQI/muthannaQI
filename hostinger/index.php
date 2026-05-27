@@ -1310,18 +1310,19 @@ function saveContactSettings() {
 
 // ── نسخ احتياطي ──────────────────────────────────────────
 function createBackup(trigger) {
-  const ts=new Date().toISOString();
-  localStorage.setItem(BACKUP_PREFIX+ts, JSON.stringify({ ts, trigger, jobs:state.jobs, payments:state.payments }));
-  pruneBackups();
+  // أرسل للسيرفر (MySQL) — لا تعتمد على localStorage
+  serverGet("createBackup", { trigger: trigger || "auto" })
+    .catch(e => console.warn("[Bina] createBackup failed:", e));
 }
 
+// pruneBackups: لا يزال يُنظِّف أي بيانات localStorage قديمة
 function pruneBackups() {
   const cutoff=Date.now()-BACKUP_DAYS*86400000;
   Object.keys(localStorage).filter((k)=>k.startsWith(BACKUP_PREFIX))
     .forEach((k)=>{ if(new Date(k.slice(BACKUP_PREFIX.length)).getTime()<cutoff) localStorage.removeItem(k); });
 }
 
-let cachedBackups = [];
+// cachedBackups مُعرَّف في data.js — لا تُعرِّفه هنا مرة ثانية
 
 async function listBackups() {
   const d = await serverGet("listBackups");
@@ -1332,10 +1333,14 @@ async function listBackups() {
 async function restoreBackup(key) {
   if(!confirm("استعادة هذه النسخة؟\n\nسيتم استبدال البيانات الحالية.")) return;
   const d = await serverGet("restoreBackup", { key: key });
-  if (!d) { alert("تعذر استعادة النسخة"); return; }
-  state.jobs=Array.isArray(d.jobs)?d.jobs:[];
-  state.payments=Array.isArray(d.payments)?d.payments:[];
-  state.activityLog=Array.isArray(d.activityLog)?d.activityLog:state.activityLog;
+  // فحص صريح: يجب أن تحتوي الاستجابة على jobs كمصفوفة
+  if (!d || !Array.isArray(d.jobs)) {
+    alert("تعذر استعادة النسخة — البيانات غير صالحة أو الاتصال فشل");
+    return;
+  }
+  state.jobs        = d.jobs;
+  state.payments    = Array.isArray(d.payments)    ? d.payments    : [];
+  state.activityLog = Array.isArray(d.activityLog) ? d.activityLog : state.activityLog;
   persist(); render(); closeBackupModal(); alert("✅ تمت الاستعادة بنجاح");
 }
 
@@ -1352,16 +1357,26 @@ async function renderBackupList() {
   const list = await listBackups();
   var el = els.backupList;
   el.innerHTML = list.length
-    ? list.map(function(bk) { return '<li class="backup-item">'
-        + '<div class="backup-info">'
-        + '<div class="backup-time">' + fmtDateTime(bk.ts) + '</div>'
-        + '<div class="backup-meta">' + (bk.size ? Math.round(bk.size/1024)+'KB' : '') + '</div>'
-        + '</div>'
-        + '<div class="backup-item-btns">'
-        + '<button class="btn-restore" onclick="restoreBackup(\'' + escHtml(bk.key) + '\')">استعادة</button>'
-        + '<button class="btn-del-backup" onclick="deleteBackup(\'' + escHtml(bk.key) + '\')">حذف</button>'
-        + '</div></li>'; }).join("")
+    ? list.map(function(bk) {
+        return '<li class="backup-item" data-bk-key="' + escHtml(bk.key) + '">'
+          + '<div class="backup-info">'
+          + '<div class="backup-time">' + fmtDateTime(bk.ts) + '</div>'
+          + '<div class="backup-meta">' + (bk.size ? Math.round(bk.size/1024)+'KB' : '') + '</div>'
+          + '</div>'
+          + '<div class="backup-item-btns">'
+          + '<button class="btn-restore"  data-bk-action="restore">استعادة</button>'
+          + '<button class="btn-del-backup" data-bk-action="delete">حذف</button>'
+          + '</div></li>';
+      }).join("")
     : '<li class="empty-backups">لا توجد نسخ احتياطية محفوظة</li>';
+  // تفويض الأحداث — آمن من XSS (لا inline JS)
+  el.onclick = function(e) {
+    const btn = e.target.closest("[data-bk-action]");
+    if (!btn) return;
+    const key = btn.closest("[data-bk-key]").dataset.bkKey;
+    if (btn.dataset.bkAction === "restore") restoreBackup(key);
+    if (btn.dataset.bkAction === "delete")  deleteBackup(key);
+  };
 }
 
 // ── تصدير / استيراد JSON ─────────────────────────────────
