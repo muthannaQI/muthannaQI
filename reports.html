@@ -317,16 +317,20 @@ const STORE_KEY   = 'plantaslb_users';
 const SESSION_KEY = 'plantaslb_session';
 const LOG_KEY     = 'plantaslb_log';
 
-/* تنظيف البيانات القديمة */
+/* تنظيف البيانات القديمة مع الحفاظ على الجلسة */
+const _savedSession = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
 if (localStorage.getItem(VERSION_KEY) !== APP_VERSION) {
   localStorage.clear();
   localStorage.setItem(VERSION_KEY, APP_VERSION);
+}
+if (_savedSession && !sessionStorage.getItem(SESSION_KEY)) {
+  sessionStorage.setItem(SESSION_KEY, _savedSession);
 }
 
 document.getElementById('versionTag').textContent = 'v' + APP_VERSION;
 
 /* ─── Auth ─── */
-const session = JSON.parse(localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY) || 'null');
+const session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY) || 'null');
 if (!session) window.location.href = 'login.html';
 document.getElementById('sessionInfo').textContent = `مرحباً، ${session?.name} – ${roleLabel(session?.role)}`;
 

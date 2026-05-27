@@ -3,207 +3,172 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>تسجيل الدخول – نظام الكيل والدفعات</title>
+  <title>حساب عمل البناء – تسجيل الدخول</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       min-height: 100vh;
-      background: #1e272e;
+      background: #eef0f2;
       display: flex; align-items: center; justify-content: center;
       padding: 20px;
     }
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-    }
+
+    /* ─── Card ─── */
     .card {
       background: #fff;
-      border-radius: 4px;
+      border-radius: 12px;
       width: 420px; max-width: 100%;
-      overflow: hidden;
-      box-shadow: 0 8px 40px rgba(0,0,0,.5);
-      position: relative; z-index: 1;
-      animation: cardIn .4s ease;
+      padding: 40px 38px 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      animation: fadeUp .4s ease;
     }
-    @keyframes cardIn {
-      from { transform: translateY(30px); opacity: 0; }
+    @keyframes fadeUp {
+      from { transform: translateY(20px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
     }
-    .card-header {
-      background: #2c3e50;
-      padding: 28px 32px 22px;
-      text-align: center; color: #fff;
+
+    /* ─── Header ─── */
+    .card-head { text-align: center; margin-bottom: 32px; }
+    .card-head h1 {
+      font-size: 26px; font-weight: 800;
+      color: #2c3e50; margin-bottom: 6px;
     }
-    .card-header .logo-icon {
-      width: 66px; height: 66px;
-      background: rgba(255,255,255,.12);
-      border: 2px solid rgba(255,255,255,.2);
-      border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: 30px; margin-bottom: 12px;
-    }
-    .card-header h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-    .card-header .subtitle { font-size: 12px; opacity: .65; }
-    /* version badge */
+    .card-head p { font-size: 14px; color: #888; }
+
+    /* ─── Version badge ─── */
     .version-badge {
       display: inline-block;
       margin-top: 10px;
-      background: rgba(192,57,43,.7);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 20px;
-      letter-spacing: .5px;
+      background: #e8f8f2;
+      color: #1a7a55;
+      font-size: 12px; font-weight: 700;
+      padding: 4px 14px; border-radius: 20px;
+      border: 1px solid #b2dfcf;
+      letter-spacing: .4px;
     }
-    .card-body { padding: 28px 32px; }
+
+    /* ─── Form ─── */
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block; font-size: 14px;
+      font-weight: 700; color: #444;
+      margin-bottom: 7px; text-align: right;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px; font-family: inherit;
+      outline: none; background: #fff;
+      transition: border .2s, box-shadow .2s;
+      text-align: right;
+    }
+    .form-group input::placeholder { color: #bbb; }
+    .form-group input:focus {
+      border-color: #2e9e6e;
+      box-shadow: 0 0 0 3px rgba(46,158,110,.12);
+    }
+
+    /* ─── Error ─── */
     .error-box {
       display: none;
-      background: #fdf2f2;
-      border: 1px solid #e74c3c;
+      background: #fff5f5; border: 1px solid #f5c6c6;
       border-right: 4px solid #e74c3c;
-      border-radius: 3px;
-      padding: 10px 14px;
+      border-radius: 6px; padding: 10px 14px;
       font-size: 13px; color: #c0392b;
       margin-bottom: 18px; font-weight: 600;
     }
     .error-box.show { display: block; animation: shake .3s; }
     @keyframes shake {
-      0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}
+      0%,100%{transform:translateX(0)}
+      25%,75%{transform:translateX(-5px)}
+      50%{transform:translateX(5px)}
     }
-    .form-group { margin-bottom: 18px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
-    .input-wrap { position: relative; }
-    .input-wrap .ico {
-      position: absolute; right: 12px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 14px; color: #aaa; pointer-events: none;
-    }
-    .input-wrap .toggle-pass {
-      position: absolute; left: 12px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 14px; color: #aaa; cursor: pointer; pointer-events: all; user-select: none;
-    }
-    .input-wrap input {
-      width: 100%;
-      padding: 10px 38px;
-      border: 1px solid #ddd; border-radius: 3px;
-      font-size: 14px; font-family: inherit;
-      outline: none; background: #fafafa;
-      transition: border .2s, box-shadow .2s;
-    }
-    .input-wrap input:focus {
-      border-color: #2c3e50; background: #fff;
-      box-shadow: 0 0 0 3px rgba(44,62,80,.08);
-    }
-    .row-extra {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 20px; font-size: 13px;
-    }
-    .remember { display: flex; align-items: center; gap: 6px; color: #555; cursor: pointer; user-select: none; }
-    .remember input { accent-color: #2c3e50; width: 14px; height: 14px; cursor: pointer; }
-    .forgot { color: #c0392b; text-decoration: none; font-weight: 600; font-size: 12px; }
-    .forgot:hover { text-decoration: underline; }
+
+    /* ─── Button ─── */
     .btn-login {
-      width: 100%; padding: 12px;
-      background: #c0392b; color: #fff;
-      border: none; border-radius: 3px;
-      font-size: 15px; font-weight: 700; font-family: inherit;
-      cursor: pointer; transition: background .15s;
-      letter-spacing: .3px;
+      width: 100%; padding: 14px;
+      background: #2e9e6e; color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 16px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: background .15s, transform .1s;
+      margin-top: 4px; letter-spacing: .3px;
     }
-    .btn-login:hover { background: #a93226; }
+    .btn-login:hover  { background: #267d58; }
+    .btn-login:active { transform: scale(.99); }
+
+    /* ─── Divider ─── */
     .divider {
-      display: flex; align-items: center; gap: 10px;
-      margin: 20px 0 14px; color: #bbb; font-size: 12px;
+      height: 1px; background: #eee;
+      margin: 22px 0;
     }
-    .divider::before, .divider::after { content:''; flex:1; height:1px; background:#e8e8e8; }
-    .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .demo-btn {
-      padding: 9px 8px;
-      border: 1px solid #ddd; border-radius: 3px;
-      background: #fafafa; cursor: pointer;
-      font-size: 12px; color: #444; font-family: inherit;
-      transition: border .15s, background .15s; text-align: center;
+
+    /* ─── Forgot ─── */
+    .forgot-wrap { text-align: center; }
+    .forgot {
+      color: #e67e22; font-size: 13px; font-weight: 600;
+      text-decoration: none;
     }
-    .demo-btn:hover { border-color: #2c3e50; background: #f0f2f4; }
-    .demo-btn strong { display: block; margin-bottom: 2px; font-size: 13px; }
-    .demo-btn small  { color: #888; }
-    .card-footer {
-      text-align: center;
-      padding: 12px 32px;
-      background: #f8f8f8;
-      border-top: 1px solid #eee;
-      font-size: 11px; color: #aaa;
-      display: flex; align-items: center; justify-content: space-between;
+    .forgot:hover { text-decoration: underline; }
+
+    /* ─── Footer version ─── */
+    .card-foot {
+      text-align: center; margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 11px; color: #bbb;
     }
-    .card-footer .ver { font-weight: 700; color: #c0392b; }
+    .card-foot .ver { color: #2e9e6e; font-weight: 700; }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <div class="card-header">
-    <div class="logo-icon">🌿</div>
-    <h1>نظام الكيل والدفعات</h1>
-    <div class="subtitle">قم بتسجيل الدخول للمتابعة</div>
-    <div class="version-badge" id="versionBadge">v1.0</div>
+
+  <!-- Head -->
+  <div class="card-head">
+    <h1>🔒 حساب عمل البناء</h1>
+    <p>أدخل بيانات الدخول للمتابعة</p>
+    <div class="version-badge" id="versionBadge">🔖 إصدار v2.0</div>
   </div>
 
-  <div class="card-body">
-    <div class="error-box" id="errorBox">البريد الإلكتروني أو كلمة المرور غير صحيحة</div>
+  <!-- Error -->
+  <div class="error-box" id="errorBox">اسم المستخدم أو كلمة المرور غير صحيحة</div>
 
-    <form onsubmit="handleLogin(event)" autocomplete="on">
-      <div class="form-group">
-        <label>البريد الإلكتروني</label>
-        <div class="input-wrap">
-          <span class="ico">✉</span>
-          <input type="email" id="loginEmail" placeholder="user@example.com" dir="ltr" autocomplete="email" required/>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>كلمة المرور</label>
-        <div class="input-wrap">
-          <span class="ico">🔒</span>
-          <span class="toggle-pass" id="toggleIcon" onclick="togglePass()">👁</span>
-          <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" required/>
-        </div>
-      </div>
-      <div class="row-extra">
-        <label class="remember"><input type="checkbox" id="rememberMe"/> تذكّرني</label>
-        <a href="#" class="forgot">نسيت كلمة المرور؟</a>
-      </div>
-      <button type="submit" class="btn-login">دخول</button>
-    </form>
-
-    <div class="divider">حسابات تجريبية</div>
-    <div class="demo-grid">
-      <button class="demo-btn" onclick="fillDemo('admin@plantaslb.com','admin123')">
-        <strong>🛡️ مدير</strong>
-        <small>admin@plantaslb.com</small>
-      </button>
-      <button class="demo-btn" onclick="fillDemo('staff@plantaslb.com','staff123')">
-        <strong>👤 موظف</strong>
-        <small>staff@plantaslb.com</small>
-      </button>
+  <!-- Form -->
+  <form onsubmit="handleLogin(event)" autocomplete="on">
+    <div class="form-group">
+      <label>اسم المستخدم</label>
+      <input type="text" id="loginUser" placeholder="اسم المستخدم"
+             autocomplete="username" required/>
     </div>
+    <div class="form-group">
+      <label>كلمة المرور</label>
+      <input type="password" id="loginPass" placeholder="••••••••"
+             autocomplete="current-password" required/>
+    </div>
+    <button type="submit" class="btn-login">دخول</button>
+  </form>
+
+  <div class="divider"></div>
+
+  <div class="forgot-wrap">
+    <a href="#" class="forgot">🗝️ نسيت كلمة المرور؟</a>
   </div>
 
-  <div class="card-footer">
-    <span>نظام الكيل والدفعات &copy; 2025</span>
-    <span class="ver" id="footerVer">v1.0</span>
+  <div class="card-foot">
+    نظام الكيل والدفعات &copy; 2025
+    &nbsp;|&nbsp;
+    <span class="ver" id="footerVer">v2.0</span>
   </div>
 </div>
 
 <script>
 /* ══════════════════════════════════
-   VERSION & KEYS
+   CONSTANTS & VERSION
 ══════════════════════════════════ */
 const APP_VERSION = '2.0';
 const VERSION_KEY = 'plantaslb_version';
@@ -211,18 +176,19 @@ const STORE_KEY   = 'plantaslb_users';
 const SESSION_KEY = 'plantaslb_session';
 const LOG_KEY     = 'plantaslb_log';
 
-/* ─── تنظيف البيانات القديمة عند تغيّر الإصدار ─── */
+/* ─── تنظيف تلقائي عند تغيّر الإصدار ─── */
 if (localStorage.getItem(VERSION_KEY) !== APP_VERSION) {
   localStorage.clear();
   localStorage.setItem(VERSION_KEY, APP_VERSION);
-  console.log('🔄 تم مسح البيانات القديمة وتحديث الإصدار إلى', APP_VERSION);
 }
 
 /* ─── عرض رقم الإصدار ─── */
-document.getElementById('versionBadge').textContent = 'v' + APP_VERSION;
+document.getElementById('versionBadge').textContent = '🔖 إصدار v' + APP_VERSION;
 document.getElementById('footerVer').textContent    = 'v' + APP_VERSION;
 
-/* ─── زرع البيانات الافتراضية ─── */
+/* ══════════════════════════════════
+   SEED DEFAULT USERS
+══════════════════════════════════ */
 (function seed() {
   if (localStorage.getItem(STORE_KEY)) return;
   localStorage.setItem(STORE_KEY, JSON.stringify([
@@ -253,17 +219,26 @@ document.getElementById('footerVer').textContent    = 'v' + APP_VERSION;
   ]));
 })();
 
-/* ─── تسجيل الدخول ─── */
+/* ══════════════════════════════════
+   LOGIN HANDLER
+   يدعم الدخول بـ: اسم المستخدم أو البريد
+══════════════════════════════════ */
 function handleLogin(e) {
   e.preventDefault();
-  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const input = document.getElementById('loginUser').value.trim();
   const pass  = document.getElementById('loginPass').value;
   const users = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
-  const user  = users.find(u => u.email.toLowerCase() === email && u.password === pass);
+
+  /* البحث بـ username أو email */
+  const user = users.find(u =>
+    (u.username && u.username.toLowerCase() === input.toLowerCase()) ||
+    (u.email    && u.email.toLowerCase()    === input.toLowerCase())
+  );
 
   const errBox = document.getElementById('errorBox');
-  if (!user) {
-    errBox.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+
+  if (!user || user.password !== pass) {
+    errBox.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
     errBox.classList.add('show');
     setTimeout(() => errBox.classList.remove('show'), 3500);
     return;
@@ -274,23 +249,19 @@ function handleLogin(e) {
     return;
   }
 
-  const session = { id: user.id, name: user.name, username: user.username, email: user.email, role: user.role, perms: user.perms };
-  const store   = document.getElementById('rememberMe').checked ? localStorage : sessionStorage;
-  store.setItem(SESSION_KEY, JSON.stringify(session));
+  /* حفظ الجلسة */
+  const session = {
+    id:       user.id,
+    name:     user.name,
+    username: user.username,
+    email:    user.email,
+    role:     user.role,
+    perms:    user.perms
+  };
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+
   addLog('login', user.name, `دخول – ${roleLabel(user.role)}`);
   window.location.href = 'users.html';
-}
-
-function fillDemo(email, pass) {
-  document.getElementById('loginEmail').value = email;
-  document.getElementById('loginPass').value  = pass;
-}
-
-function togglePass() {
-  const p = document.getElementById('loginPass');
-  const i = document.getElementById('toggleIcon');
-  p.type = p.type === 'password' ? 'text' : 'password';
-  i.textContent = p.type === 'password' ? '👁' : '🙈';
 }
 
 function roleLabel(r) {
@@ -303,7 +274,7 @@ function addLog(action, actor, detail) {
   localStorage.setItem(LOG_KEY, JSON.stringify(logs.slice(0, 200)));
 }
 
-/* ─── إذا كانت الجلسة موجودة – توجيه مباشر ─── */
+/* ─── إذا كانت الجلسة قائمة ─── */
 const _s = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
 if (_s) window.location.href = 'users.html';
 </script>
