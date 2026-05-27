@@ -1,0 +1,61 @@
+# ═══════════════════════════════════════════
+#  Bina App — .htaccess  |  plantaslb.com
+# ═══════════════════════════════════════════
+
+Options -Indexes
+ServerSignature Off
+
+# ── تشفير الاتصال (يُفعَّل تلقائياً على Hostinger) ──
+# إذا كان الموقع يدعم HTTPS، أعِد التوجيه
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP_HOST} ^plantaslb\.com$ [NC]
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# ── حماية الملفات الحساسة ──
+<FilesMatch "^(config\.php|install\.php)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# ── منع الوصول المباشر لـ API إلا من AJAX ──
+<Files "api.php">
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+</Files>
+
+# ── منع تصفح الملفات ──
+<FilesMatch "\.(json|sql|log|bak)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# ── Headers أمنية ──
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), camera=(), microphone=()"
+</IfModule>
+
+# ── ضغط GZIP ──
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript
+</IfModule>
+
+# ── Cache للملفات الثابتة ──
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css                  "access plus 1 month"
+    ExpiresByType application/javascript    "access plus 1 month"
+    ExpiresByType font/truetype             "access plus 1 year"
+    ExpiresByType font/woff2                "access plus 1 year"
+</IfModule>
+
+# ── PHP Security Settings ──
+<IfModule mod_php8.c>
+    php_flag display_errors      Off
+    php_flag log_errors          On
+    php_value session.cookie_httponly 1
+    php_value session.use_strict_mode 1
+</IfModule>
