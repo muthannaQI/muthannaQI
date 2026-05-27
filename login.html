@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>تسجيل الدخول – نظام الشهادات الصحية</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      background: linear-gradient(135deg, #0d2137 0%, #1a5276 50%, #2e86c1 100%);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* ─── Animated background particles ─── */
+    .bg-shapes { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .shape {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.04);
+      animation: float linear infinite;
+    }
+    .shape:nth-child(1)  { width:180px; height:180px; top:10%;  left:5%;  animation-duration:18s; }
+    .shape:nth-child(2)  { width:100px; height:100px; top:70%;  left:80%; animation-duration:12s; animation-delay:-4s; }
+    .shape:nth-child(3)  { width:240px; height:240px; top:40%;  left:60%; animation-duration:22s; animation-delay:-8s; }
+    .shape:nth-child(4)  { width: 80px; height: 80px; top:80%;  left:20%; animation-duration:14s; animation-delay:-2s; }
+    .shape:nth-child(5)  { width:120px; height:120px; top:20%;  left:75%; animation-duration:16s; animation-delay:-6s; }
+    @keyframes float {
+      0%   { transform: translateY(0)   rotate(0deg);   opacity:.05; }
+      50%  { transform: translateY(-60px) rotate(180deg); opacity:.12; }
+      100% { transform: translateY(0)   rotate(360deg); opacity:.05; }
+    }
+
+    /* ─── Card ─── */
+    .card {
+      position: relative; z-index: 1;
+      background: rgba(255,255,255,.97);
+      border-radius: 20px;
+      padding: 48px 44px;
+      width: 420px;
+      max-width: 100%;
+      box-shadow: 0 30px 80px rgba(0,0,0,.35);
+      animation: cardIn .5s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes cardIn {
+      from { transform: translateY(50px) scale(.96); opacity: 0; }
+      to   { transform: translateY(0)    scale(1);   opacity: 1; }
+    }
+
+    /* ─── Logo ─── */
+    .logo-wrap { text-align: center; margin-bottom: 28px; }
+    .logo-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, #1a5276, #2e86c1);
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 34px;
+      box-shadow: 0 8px 24px rgba(46,134,193,.4);
+      margin-bottom: 14px;
+    }
+    .logo-wrap h1 { font-size: 22px; color: #1a5276; font-weight: 800; }
+    .logo-wrap p  { font-size: 13px; color: #718096; margin-top: 4px; }
+
+    /* ─── Form ─── */
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #4a5568;
+      margin-bottom: 7px;
+    }
+    .input-wrap { position: relative; }
+    .input-wrap .icon {
+      position: absolute;
+      right: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: #a0aec0;
+      pointer-events: none;
+    }
+    .input-wrap input {
+      width: 100%;
+      padding: 12px 42px 12px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border .2s, box-shadow .2s;
+      background: #f9fbff;
+    }
+    .input-wrap input:focus {
+      border-color: #2e86c1;
+      box-shadow: 0 0 0 3px rgba(46,134,193,.15);
+      background: #fff;
+    }
+
+    /* ─── Remember / Forgot ─── */
+    .row-extra {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 22px; font-size: 13px;
+    }
+    .remember { display: flex; align-items: center; gap: 6px; color: #4a5568; cursor: pointer; }
+    .remember input { width: 15px; height: 15px; cursor: pointer; accent-color: #2e86c1; }
+    .forgot { color: #2e86c1; text-decoration: none; font-weight: 600; }
+    .forgot:hover { text-decoration: underline; }
+
+    /* ─── Button ─── */
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #1a5276, #2e86c1);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 4px 16px rgba(46,134,193,.4);
+      letter-spacing: .5px;
+    }
+    .btn-login:hover  { box-shadow: 0 6px 20px rgba(46,134,193,.5); transform: translateY(-1px); }
+    .btn-login:active { transform: scale(.98); }
+
+    /* ─── Error box ─── */
+    .error-box {
+      display: none;
+      background: #fff5f5;
+      border: 1.5px solid #fc8181;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #c53030;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+    .error-box.show { display: block; animation: shake .35s; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60%  { transform: translateX(-6px); }
+      40%,80%  { transform: translateX(6px); }
+    }
+
+    /* ─── Divider ─── */
+    .divider { text-align: center; color: #a0aec0; font-size: 12px; margin: 22px 0 16px; position: relative; }
+    .divider::before, .divider::after {
+      content: '';
+      position: absolute; top: 50%;
+      width: 38%; height: 1px;
+      background: #e2e8f0;
+    }
+    .divider::before { right: 0; }
+    .divider::after  { left: 0; }
+
+    /* ─── Demo accounts ─── */
+    .demo-cards { display: flex; gap: 8px; }
+    .demo-card {
+      flex: 1; padding: 10px 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: border .15s, background .15s;
+      font-size: 12px;
+      color: #4a5568;
+    }
+    .demo-card:hover { border-color: #2e86c1; background: #ebf5fb; }
+    .demo-card .role { font-size: 16px; display: block; margin-bottom: 3px; }
+    .demo-card strong { display: block; margin-bottom: 1px; }
+
+    /* ─── Footer ─── */
+    .card-footer { text-align: center; margin-top: 22px; font-size: 12px; color: #a0aec0; }
+  </style>
+</head>
+<body>
+
+<div class="bg-shapes">
+  <div class="shape"></div><div class="shape"></div><div class="shape"></div>
+  <div class="shape"></div><div class="shape"></div>
+</div>
+
+<div class="card">
+  <div class="logo-wrap">
+    <div class="logo-icon">🌿</div>
+    <h1>نظام الشهادات الصحية</h1>
+    <p>تسجيل الدخول للمتابعة</p>
+  </div>
+
+  <div class="error-box" id="errorBox">❌ البريد الإلكتروني أو كلمة المرور غير صحيحة</div>
+
+  <form onsubmit="handleLogin(event)">
+    <div class="form-group">
+      <label>البريد الإلكتروني</label>
+      <div class="input-wrap">
+        <span class="icon">📧</span>
+        <input type="email" id="loginEmail" placeholder="user@example.com" dir="ltr" autocomplete="email" required/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>كلمة المرور</label>
+      <div class="input-wrap">
+        <span class="icon" id="toggleIcon" onclick="togglePass()" style="cursor:pointer;pointer-events:all">👁️</span>
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" required/>
+      </div>
+    </div>
+
+    <div class="row-extra">
+      <label class="remember">
+        <input type="checkbox" id="rememberMe"/> تذكّرني
+      </label>
+      <a href="#" class="forgot">نسيت كلمة المرور؟</a>
+    </div>
+
+    <button type="submit" class="btn-login">🔓 تسجيل الدخول</button>
+  </form>
+
+  <div class="divider">حسابات تجريبية</div>
+  <div class="demo-cards">
+    <div class="demo-card" onclick="fillDemo('ahmed@plantaslb.com','admin123')">
+      <span class="role">🛡️</span>
+      <strong>مسؤول</strong>
+      <small>ahmed@plantaslb.com</small>
+    </div>
+    <div class="demo-card" onclick="fillDemo('sara@plantaslb.com','editor123')">
+      <span class="role">✏️</span>
+      <strong>محرّر</strong>
+      <small>sara@plantaslb.com</small>
+    </div>
+  </div>
+
+  <div class="card-footer">
+    🌿 Plantaslb – نظام إصدار الشهادات الصحية للنباتات
+  </div>
+</div>
+
+<script>
+const STORE_KEY  = 'plantaslb_users';
+const SESSION_KEY = 'plantaslb_session';
+const LOG_KEY     = 'plantaslb_log';
+
+/* ─── Seed default users if needed ─── */
+(function seed() {
+  if (localStorage.getItem(STORE_KEY)) return;
+  const demo = [
+    {
+      id: 1, name: 'أحمد العمري', email: 'ahmed@plantaslb.com',
+      password: 'admin123', phone: '0501234567',
+      role: 'admin', status: 'active',
+      perms: ['view_certificates','issue_certificates','edit_data','manage_users','view_reports','export_data'],
+      createdAt: new Date().toLocaleDateString('ar-SA')
+    },
+    {
+      id: 2, name: 'سارة المطيري', email: 'sara@plantaslb.com',
+      password: 'editor123', phone: '0556789012',
+      role: 'editor', status: 'active',
+      perms: ['view_certificates','issue_certificates','edit_data','view_reports'],
+      createdAt: new Date().toLocaleDateString('ar-SA')
+    }
+  ];
+  localStorage.setItem(STORE_KEY, JSON.stringify(demo));
+})();
+
+/* ─── Login handler ─── */
+function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('loginPass').value;
+  const users = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+  const user  = users.find(u => u.email.toLowerCase() === email && u.password === pass);
+
+  if (!user) {
+    const box = document.getElementById('errorBox');
+    box.classList.add('show');
+    setTimeout(() => box.classList.remove('show'), 3500);
+    return;
+  }
+  if (user.status === 'inactive') {
+    document.getElementById('errorBox').textContent = '⛔ هذا الحساب معطّل. تواصل مع المسؤول.';
+    document.getElementById('errorBox').classList.add('show');
+    return;
+  }
+
+  /* Save session */
+  const session = { id: user.id, name: user.name, email: user.email, role: user.role, perms: user.perms };
+  if (document.getElementById('rememberMe').checked) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } else {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+
+  /* Log activity */
+  addLog('login', user.name, `تسجيل دخول بصلاحية ${roleLabel(user.role)}`);
+
+  window.location.href = 'users.html';
+}
+
+function fillDemo(email, pass) {
+  document.getElementById('loginEmail').value = email;
+  document.getElementById('loginPass').value  = pass;
+}
+
+function togglePass() {
+  const p = document.getElementById('loginPass');
+  const i = document.getElementById('toggleIcon');
+  if (p.type === 'password') { p.type = 'text';     i.textContent = '🙈'; }
+  else                        { p.type = 'password'; i.textContent = '👁️'; }
+}
+
+function roleLabel(r) {
+  return { admin: 'مسؤول', editor: 'محرّر', viewer: 'مشاهد' }[r] || r;
+}
+
+function addLog(action, actor, detail) {
+  const logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+  logs.unshift({
+    id: Date.now(),
+    action, actor, detail,
+    time: new Date().toLocaleString('ar-SA')
+  });
+  localStorage.setItem(LOG_KEY, JSON.stringify(logs.slice(0, 200)));
+}
+
+/* ─── If already logged in, redirect ─── */
+const sess = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+if (sess) window.location.href = 'users.html';
+</script>
+</body>
+</html>

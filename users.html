@@ -19,15 +19,31 @@
     header {
       background: linear-gradient(135deg, #1a5276, #2e86c1);
       color: #fff;
-      padding: 18px 32px;
+      padding: 0 32px;
+      height: 64px;
       display: flex;
       align-items: center;
       gap: 14px;
       box-shadow: 0 3px 12px rgba(0,0,0,.2);
     }
-    header .logo { font-size: 28px; }
-    header h1 { font-size: 20px; font-weight: 700; letter-spacing: .5px; }
+    header .logo { font-size: 26px; }
+    header h1 { font-size: 18px; font-weight: 700; flex: 1; }
     header span { font-size: 13px; opacity: .8; }
+
+    /* ─── Nav ─── */
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a {
+      color: rgba(255,255,255,.75);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      transition: background .15s, color .15s;
+      font-weight: 600;
+    }
+    .nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,.18); color: #fff; }
+    .nav-links a.logout { color: #fca5a5; }
+    .nav-links a.logout:hover { background: rgba(239,68,68,.25); color: #fff; }
 
     /* ─── Layout ─── */
     .container { max-width: 1100px; margin: 32px auto; padding: 0 20px; }
@@ -242,10 +258,12 @@
 ══════════════════════════════════ -->
 <header>
   <div class="logo">🌿</div>
-  <div>
-    <h1>إدارة المستخدمين</h1>
-    <span>نظام إصدار الشهادات الصحية للنباتات</span>
-  </div>
+  <h1>إدارة المستخدمين</h1>
+  <nav class="nav-links">
+    <a href="users.html" class="active">👥 المستخدمون</a>
+    <a href="reports.html">📊 التقارير</a>
+    <a href="#" class="logout" onclick="logout()">🚪 خروج</a>
+  </nav>
 </header>
 
 <!-- ══════════════════════════════════
@@ -381,7 +399,28 @@
 ══════════════════════════════════ -->
 <script>
 /* ─── Data Store ─── */
-const STORE_KEY = 'plantaslb_users';
+const STORE_KEY   = 'plantaslb_users';
+const SESSION_KEY = 'plantaslb_session';
+const LOG_KEY     = 'plantaslb_log';
+
+/* ─── Auth check ─── */
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY) || 'null');
+if (!session) window.location.href = 'login.html';
+
+/* ─── Activity logger ─── */
+function addLog(action, actor, detail) {
+  const logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+  logs.unshift({ id: Date.now(), action, actor, detail, time: new Date().toLocaleString('ar-SA') });
+  localStorage.setItem(LOG_KEY, JSON.stringify(logs.slice(0, 200)));
+}
+
+/* ─── Logout ─── */
+function logout() {
+  addLog('logout', session.name, 'تسجيل خروج');
+  localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+  window.location.href = 'login.html';
+}
 
 function loadUsers() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
@@ -471,6 +510,7 @@ function saveUser() {
     users = users.map(u => u.id === editingId
       ? { ...u, name, email, phone, role, status, perms }
       : u);
+    addLog('edit', session.name, `تعديل بيانات المستخدم: ${name}`);
     showToast('✅ تم تحديث المستخدم بنجاح');
   } else {
     const newUser = {
@@ -478,6 +518,7 @@ function saveUser() {
       createdAt: new Date().toLocaleDateString('ar-SA')
     };
     users.push(newUser);
+    addLog('add', session.name, `إضافة مستخدم جديد: ${name} (${roleLabel(role)})`);
     showToast('✅ تم إضافة المستخدم بنجاح');
   }
 
@@ -490,7 +531,10 @@ function saveUser() {
 /* ─── Delete ─── */
 function deleteUser(id) {
   if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
-  saveUsers(loadUsers().filter(u => u.id !== id));
+  const users = loadUsers();
+  const target = users.find(u => u.id === id);
+  saveUsers(users.filter(u => u.id !== id));
+  if (target) addLog('delete', session.name, `حذف المستخدم: ${target.name}`);
   renderTable();
   updateStats();
   showToast('🗑️ تم حذف المستخدم');
