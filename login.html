@@ -3,273 +3,257 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>تسجيل الدخول – نظام الشهادات الصحية</title>
+  <title>تسجيل الدخول – نظام الكيل والدفعات</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       min-height: 100vh;
-      display: flex;
-      background: linear-gradient(135deg, #0d2137 0%, #1a5276 50%, #2e86c1 100%);
-      align-items: center;
-      justify-content: center;
+      background: #1e272e;
+      display: flex; align-items: center; justify-content: center;
       padding: 20px;
     }
-
-    /* ─── Animated background particles ─── */
-    .bg-shapes { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
-    .shape {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255,255,255,.04);
-      animation: float linear infinite;
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
     }
-    .shape:nth-child(1)  { width:180px; height:180px; top:10%;  left:5%;  animation-duration:18s; }
-    .shape:nth-child(2)  { width:100px; height:100px; top:70%;  left:80%; animation-duration:12s; animation-delay:-4s; }
-    .shape:nth-child(3)  { width:240px; height:240px; top:40%;  left:60%; animation-duration:22s; animation-delay:-8s; }
-    .shape:nth-child(4)  { width: 80px; height: 80px; top:80%;  left:20%; animation-duration:14s; animation-delay:-2s; }
-    .shape:nth-child(5)  { width:120px; height:120px; top:20%;  left:75%; animation-duration:16s; animation-delay:-6s; }
-    @keyframes float {
-      0%   { transform: translateY(0)   rotate(0deg);   opacity:.05; }
-      50%  { transform: translateY(-60px) rotate(180deg); opacity:.12; }
-      100% { transform: translateY(0)   rotate(360deg); opacity:.05; }
-    }
-
-    /* ─── Card ─── */
     .card {
+      background: #fff;
+      border-radius: 4px;
+      width: 420px; max-width: 100%;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,.5);
       position: relative; z-index: 1;
-      background: rgba(255,255,255,.97);
-      border-radius: 20px;
-      padding: 48px 44px;
-      width: 420px;
-      max-width: 100%;
-      box-shadow: 0 30px 80px rgba(0,0,0,.35);
-      animation: cardIn .5s cubic-bezier(.34,1.56,.64,1);
+      animation: cardIn .4s ease;
     }
     @keyframes cardIn {
-      from { transform: translateY(50px) scale(.96); opacity: 0; }
-      to   { transform: translateY(0)    scale(1);   opacity: 1; }
+      from { transform: translateY(30px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
     }
-
-    /* ─── Logo ─── */
-    .logo-wrap { text-align: center; margin-bottom: 28px; }
-    .logo-icon {
-      width: 72px; height: 72px;
-      background: linear-gradient(135deg, #1a5276, #2e86c1);
+    .card-header {
+      background: #2c3e50;
+      padding: 28px 32px 22px;
+      text-align: center; color: #fff;
+    }
+    .card-header .logo-icon {
+      width: 66px; height: 66px;
+      background: rgba(255,255,255,.12);
+      border: 2px solid rgba(255,255,255,.2);
       border-radius: 50%;
       display: inline-flex; align-items: center; justify-content: center;
-      font-size: 34px;
-      box-shadow: 0 8px 24px rgba(46,134,193,.4);
-      margin-bottom: 14px;
+      font-size: 30px; margin-bottom: 12px;
     }
-    .logo-wrap h1 { font-size: 22px; color: #1a5276; font-weight: 800; }
-    .logo-wrap p  { font-size: 13px; color: #718096; margin-top: 4px; }
-
-    /* ─── Form ─── */
-    .form-group { margin-bottom: 20px; }
-    .form-group label {
-      display: block;
-      font-size: 13px;
+    .card-header h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .card-header .subtitle { font-size: 12px; opacity: .65; }
+    /* version badge */
+    .version-badge {
+      display: inline-block;
+      margin-top: 10px;
+      background: rgba(192,57,43,.7);
+      color: #fff;
+      font-size: 11px;
       font-weight: 700;
-      color: #4a5568;
-      margin-bottom: 7px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: .5px;
     }
+    .card-body { padding: 28px 32px; }
+    .error-box {
+      display: none;
+      background: #fdf2f2;
+      border: 1px solid #e74c3c;
+      border-right: 4px solid #e74c3c;
+      border-radius: 3px;
+      padding: 10px 14px;
+      font-size: 13px; color: #c0392b;
+      margin-bottom: 18px; font-weight: 600;
+    }
+    .error-box.show { display: block; animation: shake .3s; }
+    @keyframes shake {
+      0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}
+    }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
     .input-wrap { position: relative; }
-    .input-wrap .icon {
-      position: absolute;
-      right: 14px; top: 50%;
+    .input-wrap .ico {
+      position: absolute; right: 12px; top: 50%;
       transform: translateY(-50%);
-      font-size: 16px;
-      color: #a0aec0;
-      pointer-events: none;
+      font-size: 14px; color: #aaa; pointer-events: none;
+    }
+    .input-wrap .toggle-pass {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px; color: #aaa; cursor: pointer; pointer-events: all; user-select: none;
     }
     .input-wrap input {
       width: 100%;
-      padding: 12px 42px 12px 14px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 14px;
-      font-family: inherit;
-      outline: none;
+      padding: 10px 38px;
+      border: 1px solid #ddd; border-radius: 3px;
+      font-size: 14px; font-family: inherit;
+      outline: none; background: #fafafa;
       transition: border .2s, box-shadow .2s;
-      background: #f9fbff;
     }
     .input-wrap input:focus {
-      border-color: #2e86c1;
-      box-shadow: 0 0 0 3px rgba(46,134,193,.15);
-      background: #fff;
+      border-color: #2c3e50; background: #fff;
+      box-shadow: 0 0 0 3px rgba(44,62,80,.08);
     }
-
-    /* ─── Remember / Forgot ─── */
     .row-extra {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 22px; font-size: 13px;
+      margin-bottom: 20px; font-size: 13px;
     }
-    .remember { display: flex; align-items: center; gap: 6px; color: #4a5568; cursor: pointer; }
-    .remember input { width: 15px; height: 15px; cursor: pointer; accent-color: #2e86c1; }
-    .forgot { color: #2e86c1; text-decoration: none; font-weight: 600; }
+    .remember { display: flex; align-items: center; gap: 6px; color: #555; cursor: pointer; user-select: none; }
+    .remember input { accent-color: #2c3e50; width: 14px; height: 14px; cursor: pointer; }
+    .forgot { color: #c0392b; text-decoration: none; font-weight: 600; font-size: 12px; }
     .forgot:hover { text-decoration: underline; }
-
-    /* ─── Button ─── */
     .btn-login {
-      width: 100%;
-      padding: 13px;
-      background: linear-gradient(135deg, #1a5276, #2e86c1);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      transition: transform .15s, box-shadow .15s;
-      box-shadow: 0 4px 16px rgba(46,134,193,.4);
-      letter-spacing: .5px;
+      width: 100%; padding: 12px;
+      background: #c0392b; color: #fff;
+      border: none; border-radius: 3px;
+      font-size: 15px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: background .15s;
+      letter-spacing: .3px;
     }
-    .btn-login:hover  { box-shadow: 0 6px 20px rgba(46,134,193,.5); transform: translateY(-1px); }
-    .btn-login:active { transform: scale(.98); }
-
-    /* ─── Error box ─── */
-    .error-box {
-      display: none;
-      background: #fff5f5;
-      border: 1.5px solid #fc8181;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: #c53030;
-      margin-bottom: 18px;
-      font-weight: 600;
+    .btn-login:hover { background: #a93226; }
+    .divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 20px 0 14px; color: #bbb; font-size: 12px;
     }
-    .error-box.show { display: block; animation: shake .35s; }
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      20%,60%  { transform: translateX(-6px); }
-      40%,80%  { transform: translateX(6px); }
+    .divider::before, .divider::after { content:''; flex:1; height:1px; background:#e8e8e8; }
+    .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .demo-btn {
+      padding: 9px 8px;
+      border: 1px solid #ddd; border-radius: 3px;
+      background: #fafafa; cursor: pointer;
+      font-size: 12px; color: #444; font-family: inherit;
+      transition: border .15s, background .15s; text-align: center;
     }
-
-    /* ─── Divider ─── */
-    .divider { text-align: center; color: #a0aec0; font-size: 12px; margin: 22px 0 16px; position: relative; }
-    .divider::before, .divider::after {
-      content: '';
-      position: absolute; top: 50%;
-      width: 38%; height: 1px;
-      background: #e2e8f0;
-    }
-    .divider::before { right: 0; }
-    .divider::after  { left: 0; }
-
-    /* ─── Demo accounts ─── */
-    .demo-cards { display: flex; gap: 8px; }
-    .demo-card {
-      flex: 1; padding: 10px 8px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      cursor: pointer;
+    .demo-btn:hover { border-color: #2c3e50; background: #f0f2f4; }
+    .demo-btn strong { display: block; margin-bottom: 2px; font-size: 13px; }
+    .demo-btn small  { color: #888; }
+    .card-footer {
       text-align: center;
-      transition: border .15s, background .15s;
-      font-size: 12px;
-      color: #4a5568;
+      padding: 12px 32px;
+      background: #f8f8f8;
+      border-top: 1px solid #eee;
+      font-size: 11px; color: #aaa;
+      display: flex; align-items: center; justify-content: space-between;
     }
-    .demo-card:hover { border-color: #2e86c1; background: #ebf5fb; }
-    .demo-card .role { font-size: 16px; display: block; margin-bottom: 3px; }
-    .demo-card strong { display: block; margin-bottom: 1px; }
-
-    /* ─── Footer ─── */
-    .card-footer { text-align: center; margin-top: 22px; font-size: 12px; color: #a0aec0; }
+    .card-footer .ver { font-weight: 700; color: #c0392b; }
   </style>
 </head>
 <body>
 
-<div class="bg-shapes">
-  <div class="shape"></div><div class="shape"></div><div class="shape"></div>
-  <div class="shape"></div><div class="shape"></div>
-</div>
-
 <div class="card">
-  <div class="logo-wrap">
+  <div class="card-header">
     <div class="logo-icon">🌿</div>
-    <h1>نظام الشهادات الصحية</h1>
-    <p>تسجيل الدخول للمتابعة</p>
+    <h1>نظام الكيل والدفعات</h1>
+    <div class="subtitle">قم بتسجيل الدخول للمتابعة</div>
+    <div class="version-badge" id="versionBadge">v1.0</div>
   </div>
 
-  <div class="error-box" id="errorBox">❌ البريد الإلكتروني أو كلمة المرور غير صحيحة</div>
+  <div class="card-body">
+    <div class="error-box" id="errorBox">البريد الإلكتروني أو كلمة المرور غير صحيحة</div>
 
-  <form onsubmit="handleLogin(event)">
-    <div class="form-group">
-      <label>البريد الإلكتروني</label>
-      <div class="input-wrap">
-        <span class="icon">📧</span>
-        <input type="email" id="loginEmail" placeholder="user@example.com" dir="ltr" autocomplete="email" required/>
+    <form onsubmit="handleLogin(event)" autocomplete="on">
+      <div class="form-group">
+        <label>البريد الإلكتروني</label>
+        <div class="input-wrap">
+          <span class="ico">✉</span>
+          <input type="email" id="loginEmail" placeholder="user@example.com" dir="ltr" autocomplete="email" required/>
+        </div>
       </div>
-    </div>
-
-    <div class="form-group">
-      <label>كلمة المرور</label>
-      <div class="input-wrap">
-        <span class="icon" id="toggleIcon" onclick="togglePass()" style="cursor:pointer;pointer-events:all">👁️</span>
-        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" required/>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <div class="input-wrap">
+          <span class="ico">🔒</span>
+          <span class="toggle-pass" id="toggleIcon" onclick="togglePass()">👁</span>
+          <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" required/>
+        </div>
       </div>
-    </div>
+      <div class="row-extra">
+        <label class="remember"><input type="checkbox" id="rememberMe"/> تذكّرني</label>
+        <a href="#" class="forgot">نسيت كلمة المرور؟</a>
+      </div>
+      <button type="submit" class="btn-login">دخول</button>
+    </form>
 
-    <div class="row-extra">
-      <label class="remember">
-        <input type="checkbox" id="rememberMe"/> تذكّرني
-      </label>
-      <a href="#" class="forgot">نسيت كلمة المرور؟</a>
-    </div>
-
-    <button type="submit" class="btn-login">🔓 تسجيل الدخول</button>
-  </form>
-
-  <div class="divider">حسابات تجريبية</div>
-  <div class="demo-cards">
-    <div class="demo-card" onclick="fillDemo('ahmed@plantaslb.com','admin123')">
-      <span class="role">🛡️</span>
-      <strong>مسؤول</strong>
-      <small>ahmed@plantaslb.com</small>
-    </div>
-    <div class="demo-card" onclick="fillDemo('sara@plantaslb.com','editor123')">
-      <span class="role">✏️</span>
-      <strong>محرّر</strong>
-      <small>sara@plantaslb.com</small>
+    <div class="divider">حسابات تجريبية</div>
+    <div class="demo-grid">
+      <button class="demo-btn" onclick="fillDemo('admin@plantaslb.com','admin123')">
+        <strong>🛡️ مدير</strong>
+        <small>admin@plantaslb.com</small>
+      </button>
+      <button class="demo-btn" onclick="fillDemo('staff@plantaslb.com','staff123')">
+        <strong>👤 موظف</strong>
+        <small>staff@plantaslb.com</small>
+      </button>
     </div>
   </div>
 
   <div class="card-footer">
-    🌿 Plantaslb – نظام إصدار الشهادات الصحية للنباتات
+    <span>نظام الكيل والدفعات &copy; 2025</span>
+    <span class="ver" id="footerVer">v1.0</span>
   </div>
 </div>
 
 <script>
-const STORE_KEY  = 'plantaslb_users';
+/* ══════════════════════════════════
+   VERSION & KEYS
+══════════════════════════════════ */
+const APP_VERSION = '2.0';
+const VERSION_KEY = 'plantaslb_version';
+const STORE_KEY   = 'plantaslb_users';
 const SESSION_KEY = 'plantaslb_session';
 const LOG_KEY     = 'plantaslb_log';
 
-/* ─── Seed default users if needed ─── */
+/* ─── تنظيف البيانات القديمة عند تغيّر الإصدار ─── */
+if (localStorage.getItem(VERSION_KEY) !== APP_VERSION) {
+  localStorage.clear();
+  localStorage.setItem(VERSION_KEY, APP_VERSION);
+  console.log('🔄 تم مسح البيانات القديمة وتحديث الإصدار إلى', APP_VERSION);
+}
+
+/* ─── عرض رقم الإصدار ─── */
+document.getElementById('versionBadge').textContent = 'v' + APP_VERSION;
+document.getElementById('footerVer').textContent    = 'v' + APP_VERSION;
+
+/* ─── زرع البيانات الافتراضية ─── */
 (function seed() {
   if (localStorage.getItem(STORE_KEY)) return;
-  const demo = [
+  localStorage.setItem(STORE_KEY, JSON.stringify([
     {
-      id: 1, name: 'أحمد العمري', email: 'ahmed@plantaslb.com',
-      password: 'admin123', phone: '0501234567',
-      role: 'admin', status: 'active',
-      perms: ['view_certificates','issue_certificates','edit_data','manage_users','view_reports','export_data'],
+      id: 1,
+      name: 'مدير النظام',
+      username: 'admin',
+      email: 'admin@plantaslb.com',
+      password: 'admin123',
+      phone: '0500000001',
+      role: 'admin',
+      status: 'active',
+      perms: ['view_data','add_work','add_payment','edit_data','delete_data','manage_users','view_reports','export_data'],
       createdAt: new Date().toLocaleDateString('ar-SA')
     },
     {
-      id: 2, name: 'سارة المطيري', email: 'sara@plantaslb.com',
-      password: 'editor123', phone: '0556789012',
-      role: 'editor', status: 'active',
-      perms: ['view_certificates','issue_certificates','edit_data','view_reports'],
+      id: 2,
+      name: 'موظف تجريبي',
+      username: 'staff',
+      email: 'staff@plantaslb.com',
+      password: 'staff123',
+      phone: '0500000002',
+      role: 'employee',
+      status: 'active',
+      perms: ['view_data','add_work','add_payment','view_reports'],
       createdAt: new Date().toLocaleDateString('ar-SA')
     }
-  ];
-  localStorage.setItem(STORE_KEY, JSON.stringify(demo));
+  ]));
 })();
 
-/* ─── Login handler ─── */
+/* ─── تسجيل الدخول ─── */
 function handleLogin(e) {
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
@@ -277,29 +261,23 @@ function handleLogin(e) {
   const users = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
   const user  = users.find(u => u.email.toLowerCase() === email && u.password === pass);
 
+  const errBox = document.getElementById('errorBox');
   if (!user) {
-    const box = document.getElementById('errorBox');
-    box.classList.add('show');
-    setTimeout(() => box.classList.remove('show'), 3500);
+    errBox.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+    errBox.classList.add('show');
+    setTimeout(() => errBox.classList.remove('show'), 3500);
     return;
   }
   if (user.status === 'inactive') {
-    document.getElementById('errorBox').textContent = '⛔ هذا الحساب معطّل. تواصل مع المسؤول.';
-    document.getElementById('errorBox').classList.add('show');
+    errBox.textContent = 'هذا الحساب معطّل – تواصل مع المسؤول';
+    errBox.classList.add('show');
     return;
   }
 
-  /* Save session */
-  const session = { id: user.id, name: user.name, email: user.email, role: user.role, perms: user.perms };
-  if (document.getElementById('rememberMe').checked) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  } else {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  }
-
-  /* Log activity */
-  addLog('login', user.name, `تسجيل دخول بصلاحية ${roleLabel(user.role)}`);
-
+  const session = { id: user.id, name: user.name, username: user.username, email: user.email, role: user.role, perms: user.perms };
+  const store   = document.getElementById('rememberMe').checked ? localStorage : sessionStorage;
+  store.setItem(SESSION_KEY, JSON.stringify(session));
+  addLog('login', user.name, `دخول – ${roleLabel(user.role)}`);
   window.location.href = 'users.html';
 }
 
@@ -311,27 +289,23 @@ function fillDemo(email, pass) {
 function togglePass() {
   const p = document.getElementById('loginPass');
   const i = document.getElementById('toggleIcon');
-  if (p.type === 'password') { p.type = 'text';     i.textContent = '🙈'; }
-  else                        { p.type = 'password'; i.textContent = '👁️'; }
+  p.type = p.type === 'password' ? 'text' : 'password';
+  i.textContent = p.type === 'password' ? '👁' : '🙈';
 }
 
 function roleLabel(r) {
-  return { admin: 'مسؤول', editor: 'محرّر', viewer: 'مشاهد' }[r] || r;
+  return { admin:'مدير', employee:'موظف', viewer:'مشاهد' }[r] || r;
 }
 
 function addLog(action, actor, detail) {
   const logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
-  logs.unshift({
-    id: Date.now(),
-    action, actor, detail,
-    time: new Date().toLocaleString('ar-SA')
-  });
+  logs.unshift({ id: Date.now(), action, actor, detail, time: new Date().toLocaleString('ar-SA') });
   localStorage.setItem(LOG_KEY, JSON.stringify(logs.slice(0, 200)));
 }
 
-/* ─── If already logged in, redirect ─── */
-const sess = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
-if (sess) window.location.href = 'users.html';
+/* ─── إذا كانت الجلسة موجودة – توجيه مباشر ─── */
+const _s = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+if (_s) window.location.href = 'users.html';
 </script>
 </body>
 </html>
