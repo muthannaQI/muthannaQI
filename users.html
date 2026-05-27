@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>إدارة المستخدمين</title>
+  <style>
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      min-height: 100vh;
+    }
+
+    /* ─── Header ─── */
+    header {
+      background: linear-gradient(135deg, #1a5276, #2e86c1);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.2);
+    }
+    header .logo { font-size: 28px; }
+    header h1 { font-size: 20px; font-weight: 700; letter-spacing: .5px; }
+    header span { font-size: 13px; opacity: .8; }
+
+    /* ─── Layout ─── */
+    .container { max-width: 1100px; margin: 32px auto; padding: 0 20px; }
+
+    /* ─── Stats Cards ─── */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,.07);
+      border-top: 4px solid #2e86c1;
+    }
+    .stat-card.admin { border-top-color: #e74c3c; }
+    .stat-card.editor { border-top-color: #f39c12; }
+    .stat-card.viewer { border-top-color: #27ae60; }
+    .stat-card .num { font-size: 32px; font-weight: 800; color: #1a5276; }
+    .stat-card.admin .num { color: #e74c3c; }
+    .stat-card.editor .num { color: #f39c12; }
+    .stat-card.viewer .num { color: #27ae60; }
+    .stat-card .label { font-size: 13px; color: #718096; margin-top: 4px; }
+
+    /* ─── Toolbar ─── */
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .toolbar input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border .2s;
+      font-family: inherit;
+    }
+    .toolbar input[type="text"]:focus { border-color: #2e86c1; }
+
+    .btn {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s;
+      font-family: inherit;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: #2e86c1; color: #fff; box-shadow: 0 2px 8px rgba(46,134,193,.35); }
+    .btn-primary:hover { background: #1a6fa3; }
+    .btn-danger  { background: #e74c3c; color: #fff; }
+    .btn-danger:hover  { background: #c0392b; }
+    .btn-edit    { background: #f39c12; color: #fff; }
+    .btn-edit:hover    { background: #d68910; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+    /* ─── Table ─── */
+    .table-wrap {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: linear-gradient(135deg, #1a5276, #2e86c1); color: #fff; }
+    thead th { padding: 14px 16px; text-align: right; font-size: 13px; font-weight: 600; }
+    tbody tr { border-bottom: 1px solid #f0f4f8; transition: background .15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #ebf5fb; }
+    tbody td { padding: 13px 16px; font-size: 14px; vertical-align: middle; }
+
+    .avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: #2e86c1;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .user-info small { color: #718096; font-size: 12px; display: block; }
+
+    /* ─── Badge / Role ─── */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-admin  { background: #fde8e8; color: #c0392b; }
+    .badge-editor { background: #fef9e7; color: #b7770d; }
+    .badge-viewer { background: #e9f7ef; color: #1e8449; }
+
+    /* ─── Status ─── */
+    .status { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-active   { background: #27ae60; }
+    .dot-inactive { background: #95a5a6; }
+
+    /* ─── Modal ─── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      width: 480px;
+      max-width: 95vw;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      animation: slideUp .25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .modal h2 { font-size: 20px; margin-bottom: 22px; color: #1a5276; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #4a5568; }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border .2s;
+      font-family: inherit;
+      background: #fff;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: #2e86c1; }
+
+    .perm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 2px solid #e2e8f0;
+      cursor: pointer;
+      transition: border .15s, background .15s;
+      font-size: 13px;
+      user-select: none;
+    }
+    .perm-item:has(input:checked) {
+      border-color: #2e86c1;
+      background: #ebf5fb;
+      color: #1a5276;
+      font-weight: 600;
+    }
+    .perm-item input { cursor: pointer; width: 15px; height: 15px; }
+
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    /* ─── Empty State ─── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #a0aec0;
+    }
+    .empty .icon { font-size: 52px; margin-bottom: 12px; }
+
+    /* ─── Toast ─── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1a5276;
+      color: #fff;
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,.25);
+      z-index: 9999;
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     HEADER
+══════════════════════════════════ -->
+<header>
+  <div class="logo">🌿</div>
+  <div>
+    <h1>إدارة المستخدمين</h1>
+    <span>نظام إصدار الشهادات الصحية للنباتات</span>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════ -->
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="num" id="totalCount">0</div>
+      <div class="label">إجمالي المستخدمين</div>
+    </div>
+    <div class="stat-card admin">
+      <div class="num" id="adminCount">0</div>
+      <div class="label">🛡️ مسؤول</div>
+    </div>
+    <div class="stat-card editor">
+      <div class="num" id="editorCount">0</div>
+      <div class="label">✏️ محرّر</div>
+    </div>
+    <div class="stat-card viewer">
+      <div class="num" id="viewerCount">0</div>
+      <div class="label">👁️ مشاهد</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="🔍 بحث بالاسم أو البريد الإلكتروني…" oninput="renderTable()">
+    <button class="btn btn-primary" onclick="openModal()">+ إضافة مستخدم</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>المستخدم</th>
+          <th>رقم الجوال</th>
+          <th>الدور</th>
+          <th>الصلاحيات</th>
+          <th>الحالة</th>
+          <th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL – Add / Edit User
+══════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeOnOutsideClick(event)">
+  <div class="modal">
+    <h2 id="modalTitle">➕ إضافة مستخدم جديد</h2>
+
+    <div class="form-group">
+      <label>الاسم الكامل *</label>
+      <input type="text" id="fName" placeholder="محمد أحمد"/>
+    </div>
+
+    <div class="form-group">
+      <label>البريد الإلكتروني *</label>
+      <input type="email" id="fEmail" placeholder="user@example.com" dir="ltr"/>
+    </div>
+
+    <div class="form-group">
+      <label>رقم الجوال</label>
+      <input type="tel" id="fPhone" placeholder="05xxxxxxxx" dir="ltr"/>
+    </div>
+
+    <div class="form-group">
+      <label>كلمة المرور *</label>
+      <input type="password" id="fPassword" placeholder="••••••••"/>
+    </div>
+
+    <div class="form-group">
+      <label>الدور الوظيفي</label>
+      <select id="fRole" onchange="applyRoleDefaults()">
+        <option value="admin">🛡️ مسؤول – صلاحيات كاملة</option>
+        <option value="editor" selected>✏️ محرّر – تعديل وإصدار</option>
+        <option value="viewer">👁️ مشاهد – قراءة فقط</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>الصلاحيات التفصيلية</label>
+      <div class="perm-grid" id="permGrid">
+        <label class="perm-item">
+          <input type="checkbox" value="view_certificates"> عرض الشهادات
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" value="issue_certificates"> إصدار الشهادات
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" value="edit_data"> تعديل البيانات
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" value="manage_users"> إدارة المستخدمين
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" value="view_reports"> عرض التقارير
+        </label>
+        <label class="perm-item">
+          <input type="checkbox" value="export_data"> تصدير البيانات
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>الحالة</label>
+      <select id="fStatus">
+        <option value="active">✅ نشط</option>
+        <option value="inactive">⏸️ غير نشط</option>
+      </select>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" style="background:#e2e8f0;color:#4a5568" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveUser()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════
+     SCRIPT
+══════════════════════════════════ -->
+<script>
+/* ─── Data Store ─── */
+const STORE_KEY = 'plantaslb_users';
+
+function loadUsers() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch { return []; }
+}
+function saveUsers(users) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(users));
+}
+
+/* Seed demo data on first load */
+(function seed() {
+  if (loadUsers().length > 0) return;
+  const demo = [
+    {
+      id: 1, name: 'أحمد العمري', email: 'ahmed@plantaslb.com', phone: '0501234567',
+      role: 'admin', status: 'active',
+      perms: ['view_certificates','issue_certificates','edit_data','manage_users','view_reports','export_data'],
+      createdAt: new Date().toLocaleDateString('ar-SA')
+    },
+    {
+      id: 2, name: 'سارة المطيري', email: 'sara@plantaslb.com', phone: '0556789012',
+      role: 'editor', status: 'active',
+      perms: ['view_certificates','issue_certificates','edit_data','view_reports'],
+      createdAt: new Date().toLocaleDateString('ar-SA')
+    }
+  ];
+  saveUsers(demo);
+})();
+
+/* ─── Role Defaults ─── */
+const ROLE_PERMS = {
+  admin:  ['view_certificates','issue_certificates','edit_data','manage_users','view_reports','export_data'],
+  editor: ['view_certificates','issue_certificates','edit_data','view_reports'],
+  viewer: ['view_certificates','view_reports']
+};
+
+function applyRoleDefaults() {
+  const role = document.getElementById('fRole').value;
+  const checks = document.querySelectorAll('#permGrid input[type="checkbox"]');
+  checks.forEach(cb => cb.checked = ROLE_PERMS[role].includes(cb.value));
+}
+
+/* ─── Modal ─── */
+let editingId = null;
+
+function openModal(user = null) {
+  editingId = user ? user.id : null;
+  document.getElementById('modalTitle').textContent = user ? '✏️ تعديل المستخدم' : '➕ إضافة مستخدم جديد';
+  document.getElementById('fName').value     = user?.name     || '';
+  document.getElementById('fEmail').value    = user?.email    || '';
+  document.getElementById('fPhone').value    = user?.phone    || '';
+  document.getElementById('fPassword').value = '';
+  document.getElementById('fRole').value     = user?.role     || 'editor';
+  document.getElementById('fStatus').value   = user?.status   || 'active';
+  const checks = document.querySelectorAll('#permGrid input[type="checkbox"]');
+  checks.forEach(cb => cb.checked = (user?.perms || ROLE_PERMS['editor']).includes(cb.value));
+  if (!user) applyRoleDefaults();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editingId = null;
+}
+
+function closeOnOutsideClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+/* ─── Save User ─── */
+function saveUser() {
+  const name     = document.getElementById('fName').value.trim();
+  const email    = document.getElementById('fEmail').value.trim();
+  const phone    = document.getElementById('fPhone').value.trim();
+  const password = document.getElementById('fPassword').value;
+  const role     = document.getElementById('fRole').value;
+  const status   = document.getElementById('fStatus').value;
+  const perms    = [...document.querySelectorAll('#permGrid input:checked')].map(cb => cb.value);
+
+  if (!name)  { showToast('⚠️ الاسم الكامل مطلوب'); return; }
+  if (!email) { showToast('⚠️ البريد الإلكتروني مطلوب'); return; }
+  if (!editingId && !password) { showToast('⚠️ كلمة المرور مطلوبة'); return; }
+
+  let users = loadUsers();
+
+  if (editingId) {
+    users = users.map(u => u.id === editingId
+      ? { ...u, name, email, phone, role, status, perms }
+      : u);
+    showToast('✅ تم تحديث المستخدم بنجاح');
+  } else {
+    const newUser = {
+      id: Date.now(), name, email, phone, role, status, perms,
+      createdAt: new Date().toLocaleDateString('ar-SA')
+    };
+    users.push(newUser);
+    showToast('✅ تم إضافة المستخدم بنجاح');
+  }
+
+  saveUsers(users);
+  closeModal();
+  renderTable();
+  updateStats();
+}
+
+/* ─── Delete ─── */
+function deleteUser(id) {
+  if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
+  saveUsers(loadUsers().filter(u => u.id !== id));
+  renderTable();
+  updateStats();
+  showToast('🗑️ تم حذف المستخدم');
+}
+
+/* ─── Perm Labels ─── */
+const PERM_LABELS = {
+  view_certificates:  'عرض',
+  issue_certificates: 'إصدار',
+  edit_data:          'تعديل',
+  manage_users:       'إدارة',
+  view_reports:       'تقارير',
+  export_data:        'تصدير'
+};
+
+/* ─── Render Table ─── */
+function renderTable() {
+  const q     = document.getElementById('searchInput').value.trim().toLowerCase();
+  const users = loadUsers().filter(u =>
+    !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('tableBody');
+
+  if (!users.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">
+      <div class="icon">👤</div>
+      <p>لا يوجد مستخدمون مطابقون</p>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = users.map((u, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>
+        <div class="user-info">
+          <div class="avatar" style="background:${avatarColor(u.role)}">${u.name.charAt(0)}</div>
+          <div>
+            <strong>${u.name}</strong>
+            <small>${u.email}</small>
+          </div>
+        </div>
+      </td>
+      <td dir="ltr" style="text-align:right">${u.phone || '—'}</td>
+      <td><span class="badge badge-${u.role}">${roleLabel(u.role)}</span></td>
+      <td>${(u.perms || []).map(p => `<span class="badge" style="background:#eef2ff;color:#4338ca;margin:2px">${PERM_LABELS[p]||p}</span>`).join('')}</td>
+      <td>
+        <div class="status">
+          <div class="dot ${u.status === 'active' ? 'dot-active' : 'dot-inactive'}"></div>
+          ${u.status === 'active' ? 'نشط' : 'غير نشط'}
+        </div>
+      </td>
+      <td>
+        <button class="btn btn-edit btn-sm" onclick='openModal(${JSON.stringify(u)})'>تعديل</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})" style="margin-right:4px">حذف</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function avatarColor(role) {
+  return { admin: '#e74c3c', editor: '#f39c12', viewer: '#27ae60' }[role] || '#2e86c1';
+}
+function roleLabel(role) {
+  return { admin: '🛡️ مسؤول', editor: '✏️ محرّر', viewer: '👁️ مشاهد' }[role] || role;
+}
+
+/* ─── Stats ─── */
+function updateStats() {
+  const users = loadUsers();
+  document.getElementById('totalCount').textContent  = users.length;
+  document.getElementById('adminCount').textContent  = users.filter(u => u.role === 'admin').length;
+  document.getElementById('editorCount').textContent = users.filter(u => u.role === 'editor').length;
+  document.getElementById('viewerCount').textContent = users.filter(u => u.role === 'viewer').length;
+}
+
+/* ─── Toast ─── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ─── Init ─── */
+renderTable();
+updateStats();
+</script>
+</body>
+</html>
