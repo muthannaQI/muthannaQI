@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>التقارير وسجل النشاط – نظام الكيل والدفعات</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    /* ══════ TOP BAR ══════ */
+    .top-bar {
+      background: #2c3e50; color: #fff;
+      height: 52px;
+      display: flex; align-items: center;
+      padding: 0 20px; gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    .top-bar .site-title {
+      font-size: 15px; font-weight: 700; flex: 1;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .site-title small { font-size: 11px; opacity: .6; font-weight: 400; }
+    .version-tag {
+      font-size: 10px; background: #c0392b;
+      padding: 2px 7px; border-radius: 10px;
+      font-weight: 700;
+    }
+    .top-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 16px; border: none; border-radius: 3px;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: filter .15s; text-decoration: none;
+    }
+    .top-btn:hover { filter: brightness(1.15); }
+    .top-btn-red  { background: #c0392b; color: #fff; }
+    .top-btn-teal { background: #1abc9c; color: #fff; }
+
+    /* ══════ TABS ══════ */
+    .tab-bar {
+      background: #fff;
+      border-bottom: 2px solid #e0e0e0;
+      display: flex; padding: 0 20px;
+    }
+    .tab {
+      padding: 12px 20px; font-size: 14px; font-weight: 600; color: #777;
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      transition: color .15s, border-color .15s;
+      text-decoration: none; display: flex; align-items: center; gap: 6px;
+    }
+    .tab:hover { color: #2c3e50; }
+    .tab.active { color: #2c3e50; border-bottom-color: #c0392b; }
+
+    /* ══════ PAGE STRIP ══════ */
+    .page-strip {
+      background: #fff; padding: 13px 24px;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .page-strip h2 { font-size: 16px; color: #2c3e50; font-weight: 700; }
+    .page-strip small { font-size: 12px; color: #999; }
+
+    /* ══════ CONTAINER ══════ */
+    .container { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+
+    .section-title {
+      font-size: 15px; font-weight: 700; color: #2c3e50;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
+    }
+
+    /* ─── Stats Grid ─── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff; border-radius: 3px;
+      padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      border-right: 4px solid #2c3e50;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .stat-card.logins   { border-right-color: #27ae60; }
+    .stat-card.adds     { border-right-color: #2e86c1; }
+    .stat-card.edits    { border-right-color: #e67e22; }
+    .stat-card.deletes  { border-right-color: #c0392b; }
+    .stat-card.active   { border-right-color: #8e44ad; }
+    .stat-icon { font-size: 26px; }
+    .stat-info .num     { font-size: 26px; font-weight: 800; color: #2c3e50; }
+    .stat-info .label   { font-size: 12px; color: #888; margin-top: 2px; }
+
+    /* ─── Charts Row ─── */
+    .charts-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 18px; margin-bottom: 24px;
+    }
+    @media(max-width:680px){ .charts-row{ grid-template-columns:1fr; } }
+
+    .chart-card {
+      background: #fff; border-radius: 3px;
+      padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .chart-card h3 { font-size: 13px; color: #555; margin-bottom: 16px; font-weight: 700; }
+
+    /* bar chart */
+    .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+    .bar-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+    .bar-label { width: 70px; text-align: right; color: #555; white-space: nowrap; }
+    .bar-track { flex: 1; height: 18px; background: #f0f2f5; border-radius: 2px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 2px; transition: width .8s ease; min-width: 2px; }
+    .bar-val   { width: 26px; text-align: left; font-weight: 700; color: #333; font-size: 12px; }
+
+    /* donut */
+    .donut-wrap { display: flex; align-items: center; gap: 20px; justify-content: center; }
+    .donut {
+      width: 120px; height: 120px; border-radius: 50%;
+      position: relative; flex-shrink: 0;
+    }
+    .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+    .legend-item  { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+    .legend-dot   { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ─── Toolbar ─── */
+    .log-toolbar {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      align-items: center; margin-bottom: 14px;
+    }
+    .log-toolbar input,
+    .log-toolbar select {
+      padding: 8px 12px;
+      border: 1px solid #ccc; border-radius: 3px;
+      font-size: 13px; font-family: inherit;
+      outline: none; background: #fff; transition: border .2s;
+    }
+    .log-toolbar input { flex: 1; min-width: 180px; }
+    .log-toolbar input:focus,
+    .log-toolbar select:focus { border-color: #2c3e50; }
+
+    .btn {
+      padding: 8px 18px; border: none; border-radius: 3px;
+      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: filter .15s;
+    }
+    .btn:hover { filter: brightness(1.1); }
+    .btn-outline { background: #fff; border: 1px solid #ccc; color: #444; }
+    .btn-outline:hover { border-color: #2c3e50; color: #2c3e50; }
+    .btn-danger { background: #c0392b; color: #fff; border: none; }
+
+    /* ─── Table ─── */
+    .table-wrap {
+      background: #fff; border-radius: 3px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: #2c3e50; color: #fff; }
+    thead th { padding: 12px 14px; text-align: right; font-size: 13px; font-weight: 600; }
+    tbody tr { border-bottom: 1px solid #f0f0f0; transition: background .12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8f9fa; }
+    tbody td { padding: 11px 14px; font-size: 13px; vertical-align: middle; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 2px;
+      font-size: 11px; font-weight: 700;
+    }
+    .badge-login  { background: #e9f7ef; color: #1e8449; }
+    .badge-add    { background: #eaf4fb; color: #1a5276; }
+    .badge-edit   { background: #fef3e2; color: #d35400; }
+    .badge-delete { background: #fde8e8; color: #c0392b; }
+    .badge-logout { background: #f0f0f0; color: #555; }
+
+    /* pagination */
+    .pagination {
+      display: flex; justify-content: center; align-items: center;
+      gap: 5px; padding: 14px;
+    }
+    .page-btn {
+      width: 32px; height: 32px;
+      border: 1px solid #ddd; background: #fff; border-radius: 3px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: .15s; font-family: inherit; color: #555;
+    }
+    .page-btn:hover    { border-color: #2c3e50; color: #2c3e50; }
+    .page-btn.active   { background: #2c3e50; border-color: #2c3e50; color: #fff; }
+    .page-btn:disabled { opacity: .35; cursor: default; }
+
+    .empty { text-align: center; padding: 50px; color: #bbb; }
+    .empty .icon { font-size: 40px; margin-bottom: 10px; }
+
+    /* ─── Toast ─── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(70px);
+      background: #2c3e50; color: #fff;
+      padding: 10px 24px; border-radius: 3px;
+      font-size: 13px; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,.25);
+      z-index: 9999;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ══════ TOP BAR ══════ -->
+<div class="top-bar">
+  <div class="site-title">
+    🌿 نظام الكيل والدفعات
+    <small>| التقارير وسجل النشاط</small>
+    <span class="version-tag" id="versionTag">v2.0</span>
+  </div>
+  <a href="users.html" class="top-btn top-btn-teal">👥 المستخدمون</a>
+  <button class="top-btn top-btn-red" onclick="logout()">خروج</button>
+</div>
+
+<!-- ══════ TABS ══════ -->
+<div class="tab-bar">
+  <a class="tab" href="users.html">👥 المستخدمون</a>
+  <a class="tab active" href="reports.html">📊 التقارير</a>
+</div>
+
+<!-- ══════ PAGE STRIP ══════ -->
+<div class="page-strip">
+  <h2>التقارير وسجل النشاط</h2>
+  <small id="sessionInfo"></small>
+</div>
+
+<div class="container">
+
+  <!-- ── Stats ── -->
+  <div class="section-title">📊 ملخص النشاط</div>
+  <div class="stats-grid">
+    <div class="stat-card logins">
+      <div class="stat-icon">🔐</div>
+      <div class="stat-info"><div class="num" id="loginCount">0</div><div class="label">عمليات الدخول</div></div>
+    </div>
+    <div class="stat-card adds">
+      <div class="stat-icon">➕</div>
+      <div class="stat-info"><div class="num" id="addCount">0</div><div class="label">إضافة مستخدمين</div></div>
+    </div>
+    <div class="stat-card edits">
+      <div class="stat-icon">✏️</div>
+      <div class="stat-info"><div class="num" id="editCount">0</div><div class="label">تعديلات</div></div>
+    </div>
+    <div class="stat-card deletes">
+      <div class="stat-icon">🗑️</div>
+      <div class="stat-info"><div class="num" id="deleteCount">0</div><div class="label">عمليات حذف</div></div>
+    </div>
+    <div class="stat-card active">
+      <div class="stat-icon">👥</div>
+      <div class="stat-info"><div class="num" id="activeUsers">0</div><div class="label">مستخدمون نشطون</div></div>
+    </div>
+  </div>
+
+  <!-- ── Charts ── -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <h3>📈 توزيع المستخدمين حسب الدور</h3>
+      <div class="bar-chart" id="rolesChart"></div>
+    </div>
+    <div class="chart-card">
+      <h3>🔐 توزيع الصلاحيات الأكثر استخداماً</h3>
+      <div id="permsChartWrap"></div>
+    </div>
+  </div>
+
+  <!-- ── Log ── -->
+  <div class="section-title">🕒 سجل النشاط التفصيلي</div>
+
+  <div class="log-toolbar">
+    <input type="text" id="logSearch" placeholder="🔍 بحث بالاسم أو التفاصيل…" oninput="renderLog()">
+    <select id="filterAction" onchange="renderLog()">
+      <option value="">جميع الأنشطة</option>
+      <option value="login">🔐 دخول</option>
+      <option value="add">➕ إضافة</option>
+      <option value="edit">✏️ تعديل</option>
+      <option value="delete">🗑️ حذف</option>
+      <option value="logout">🚪 خروج</option>
+    </select>
+    <button class="btn btn-outline" onclick="exportCSV()">📥 تصدير CSV</button>
+    <button class="btn btn-danger" onclick="clearLogs()">🗑️ مسح السجل</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>المستخدم</th>
+          <th>النشاط</th>
+          <th>التفاصيل</th>
+          <th>التوقيت</th>
+        </tr>
+      </thead>
+      <tbody id="logBody"></tbody>
+    </table>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+const APP_VERSION = '2.1';
+const VERSION_KEY = 'plantaslb_version';
+const STORE_KEY   = 'plantaslb_users';
+const SESSION_KEY = 'plantaslb_session';
+const LOG_KEY     = 'plantaslb_log';
+
+/* تنظيف البيانات القديمة مع الحفاظ على الجلسة */
+const _savedSession = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+if (localStorage.getItem(VERSION_KEY) !== APP_VERSION) {
+  localStorage.clear();
+  localStorage.setItem(VERSION_KEY, APP_VERSION);
+}
+if (_savedSession && !sessionStorage.getItem(SESSION_KEY)) {
+  sessionStorage.setItem(SESSION_KEY, _savedSession);
+}
+
+document.getElementById('versionTag').textContent = 'v' + APP_VERSION;
+
+/* ─── Auth ─── */
+const session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY) || 'null');
+if (!session) window.location.href = 'login.html';
+document.getElementById('sessionInfo').textContent = `مرحباً، ${session?.name} – ${roleLabel(session?.role)}`;
+
+/* ─── Helpers ─── */
+function getLogs()  { try { return JSON.parse(localStorage.getItem(LOG_KEY)   || '[]'); } catch { return []; } }
+function getUsers() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch { return []; } }
+
+function roleLabel(r) { return { admin:'مدير', employee:'موظف', viewer:'مشاهد' }[r] || r; }
+
+function logout() {
+  addLog('logout', session.name, 'تسجيل خروج');
+  localStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(SESSION_KEY);
+  window.location.href = 'login.html';
+}
+
+function addLog(action, actor, detail) {
+  const logs = getLogs();
+  logs.unshift({ id: Date.now(), action, actor, detail, time: new Date().toLocaleString('ar-SA') });
+  localStorage.setItem(LOG_KEY, JSON.stringify(logs.slice(0, 200)));
+}
+
+/* ─── Stats ─── */
+function updateStats() {
+  const logs  = getLogs();
+  const users = getUsers();
+  document.getElementById('loginCount').textContent  = logs.filter(l => l.action === 'login').length;
+  document.getElementById('addCount').textContent    = logs.filter(l => l.action === 'add').length;
+  document.getElementById('editCount').textContent   = logs.filter(l => l.action === 'edit').length;
+  document.getElementById('deleteCount').textContent = logs.filter(l => l.action === 'delete').length;
+  document.getElementById('activeUsers').textContent = users.filter(u => u.status === 'active').length;
+}
+
+/* ─── Roles Bar Chart ─── */
+function renderRolesChart() {
+  const users = getUsers();
+  const counts = {
+    'مدير':   { count: users.filter(u => u.role === 'admin').length,    color: '#c0392b' },
+    'موظف':   { count: users.filter(u => u.role === 'employee').length, color: '#e67e22' },
+    'مشاهد':  { count: users.filter(u => u.role === 'viewer').length,   color: '#27ae60' },
+  };
+  const max = Math.max(...Object.values(counts).map(v => v.count), 1);
+  document.getElementById('rolesChart').innerHTML = Object.entries(counts).map(([label, {count, color}]) => `
+    <div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${(count/max*100).toFixed(1)}%; background:${color}"></div>
+      </div>
+      <div class="bar-val">${count}</div>
+    </div>
+  `).join('');
+}
+
+/* ─── Permissions Donut ─── */
+function renderPermsChart() {
+  const users = getUsers();
+  const PERM_LABELS = {
+    view_data:'عرض البيانات', add_work:'إضافة أعمال',
+    add_payment:'تسديدات', edit_data:'تعديل',
+    delete_data:'حذف', manage_users:'إدارة المستخدمين',
+    view_reports:'التقارير', export_data:'تصدير'
+  };
+  const permCounts = {};
+  users.forEach(u => (u.perms||[]).forEach(p => { permCounts[p] = (permCounts[p]||0) + 1; }));
+
+  const colors = ['#c0392b','#e67e22','#2e86c1','#27ae60','#8e44ad','#16a085','#d35400','#2c3e50'];
+  const total  = Object.values(permCounts).reduce((a,b)=>a+b,0) || 1;
+  const sorted = Object.entries(permCounts).sort((a,b)=>b[1]-a[1]);
+
+  if (!sorted.length) {
+    document.getElementById('permsChartWrap').innerHTML = '<p style="text-align:center;color:#bbb;padding:30px">لا توجد بيانات</p>';
+    return;
+  }
+
+  let deg = 0;
+  const segments = sorted.map(([p, count], i) => {
+    const pct = (count/total)*360;
+    const color = colors[i % colors.length];
+    const seg = `${color} ${deg}deg ${deg+pct}deg`;
+    deg += pct;
+    return { p, count, color, seg };
+  });
+
+  document.getElementById('permsChartWrap').innerHTML = `
+    <div class="donut-wrap">
+      <div class="donut" style="background:conic-gradient(${segments.map(s=>s.seg).join(',')}); box-shadow:0 2px 12px rgba(0,0,0,.15)">
+        <div style="position:absolute;inset:18px;background:#fff;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;flex-direction:column;
+          font-size:10px;color:#888;font-weight:600;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:#2c3e50">${users.length}</div>مستخدم
+        </div>
+      </div>
+      <div class="donut-legend">
+        ${segments.slice(0,6).map(s=>`
+          <div class="legend-item">
+            <div class="legend-dot" style="background:${s.color}"></div>
+            <span>${PERM_LABELS[s.p]||s.p} <strong>(${s.count})</strong></span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ─── Pagination ─── */
+let currentPage = 1;
+const PAGE_SIZE = 10;
+
+function renderLog() { currentPage = 1; renderPage(); }
+
+function renderPage() {
+  const q      = document.getElementById('logSearch').value.trim().toLowerCase();
+  const filter = document.getElementById('filterAction').value;
+  let logs = getLogs().filter(l => {
+    const mQ = !q || l.actor.toLowerCase().includes(q) || l.detail.toLowerCase().includes(q);
+    const mF = !filter || l.action === filter;
+    return mQ && mF;
+  });
+
+  const totalPages = Math.ceil(logs.length / PAGE_SIZE) || 1;
+  currentPage = Math.min(currentPage, totalPages);
+  const slice = logs.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+
+  const actionBadge = {
+    login:  '<span class="badge badge-login">🔐 دخول</span>',
+    add:    '<span class="badge badge-add">➕ إضافة</span>',
+    edit:   '<span class="badge badge-edit">✏️ تعديل</span>',
+    delete: '<span class="badge badge-delete">🗑️ حذف</span>',
+    logout: '<span class="badge badge-logout">🚪 خروج</span>',
+  };
+
+  const tbody = document.getElementById('logBody');
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty"><div class="icon">📋</div><p>لا يوجد نشاط مطابق</p></td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map((l,i) => `
+      <tr>
+        <td style="color:#bbb">${(currentPage-1)*PAGE_SIZE+i+1}</td>
+        <td><strong>${l.actor}</strong></td>
+        <td>${actionBadge[l.action] || `<span class="badge" style="background:#f0f0f0;color:#555">${l.action}</span>`}</td>
+        <td style="color:#555">${l.detail}</td>
+        <td style="color:#999;font-size:12px;white-space:nowrap">${l.time}</td>
+      </tr>
+    `).join('');
+  }
+
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+  let btns = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  for (let p = 1; p <= totalPages; p++) {
+    if (totalPages > 7 && p > 2 && p < totalPages-1 && Math.abs(p-currentPage) > 1) {
+      if (p === 3 || p === totalPages-2) btns += `<span style="padding:0 4px;color:#bbb">…</span>`;
+      continue;
+    }
+    btns += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  btns += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+  pag.innerHTML = btns;
+}
+
+function goPage(p) { currentPage = p; renderPage(); }
+
+/* ─── Export ─── */
+function exportCSV() {
+  const logs = getLogs();
+  if (!logs.length) { showToast('⚠️ لا يوجد سجل لتصديره'); return; }
+  const rows = logs.map(l => `"${l.actor}","${l.action}","${l.detail}","${l.time}"`).join('\n');
+  const blob = new Blob(['﻿المستخدم,النشاط,التفاصيل,التوقيت\n' + rows], { type: 'text/csv;charset=utf-8;' });
+  const a    = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `activity_log_${Date.now()}.csv`;
+  a.click();
+  showToast('📥 تم تصدير السجل');
+}
+
+/* ─── Clear ─── */
+function clearLogs() {
+  if (!confirm('هل أنت متأكد من مسح كامل سجل النشاط؟')) return;
+  localStorage.removeItem(LOG_KEY);
+  updateStats(); renderRolesChart(); renderPermsChart(); renderLog();
+  showToast('🗑️ تم مسح السجل');
+}
+
+/* ─── Toast ─── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ─── Init ─── */
+updateStats();
+renderRolesChart();
+renderPermsChart();
+renderLog();
+</script>
+</body>
+</html>
