@@ -464,7 +464,7 @@
 /* ══════════════════════════════════
    CONSTANTS
 ══════════════════════════════════ */
-const APP_VERSION = '2.0';
+const APP_VERSION = '2.1';
 const VERSION_KEY = 'plantaslb_version';
 const STORE_KEY   = 'plantaslb_users';
 const SESSION_KEY = 'plantaslb_session';
@@ -528,17 +528,10 @@ function roleLabel(r) {
   if (loadUsers().length) return;
   saveUsers([
     {
-      id: 1, name: 'مدير النظام', username: 'admin',
-      email: 'admin@plantaslb.com', password: 'admin123', phone: '0500000001',
+      id: 1, name: 'مثنى', username: 'muthanna',
+      email: 'muthanna@plantaslb.com', password: 'admin123', phone: '',
       role: 'admin', status: 'active',
       perms: ['view_data','add_work','add_payment','edit_data','delete_data','manage_users','view_reports','export_data'],
-      createdAt: new Date().toLocaleDateString('ar-SA')
-    },
-    {
-      id: 2, name: 'موظف تجريبي', username: 'staff',
-      email: 'staff@plantaslb.com', password: 'staff123', phone: '0500000002',
-      role: 'employee', status: 'active',
-      perms: ['view_data','add_work','add_payment','view_reports'],
       createdAt: new Date().toLocaleDateString('ar-SA')
     }
   ]);
